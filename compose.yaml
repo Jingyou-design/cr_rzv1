@@ -1,0 +1,14 @@
+services:
+  cr-rz:
+    build: .
+    image: cr-rz:latest
+    container_name: cr-rz
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./temp:/app/temp
