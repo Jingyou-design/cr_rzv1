@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>软著代码生成系统</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-2: #22263a;
+      --border: #2e3350;
+      --primary: #5b6ef5;
+      --primary-hover: #4a5ce8;
+      --primary-glow: rgba(91,110,245,0.25);
+      --text: #e8eaf6;
+      --text-muted: #7b82a8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --radius: 12px;
+      --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding-bottom: 8px;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 36px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--primary);
+      background: var(--primary-glow);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .upload-zone .label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .upload-zone .label span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .file-name {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--success);
+      font-weight: 500;
+      display: none;
+    }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #0f1117;
+    }
+    .btn-success:hover {
+      opacity: 0.88;
+    }
+
+    /* ── Status panel ── */
+    .status-panel {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .task-id-row {
+      background: var(--surface-2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .task-id-row code {
+      color: var(--text);
+      font-family: monospace;
+      font-size: 11px;
+      word-break: break-all;
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .progress-bar.indeterminate {
+      width: 40%;
+      animation: slide 1.4s infinite ease-in-out;
+    }
+    @keyframes slide {
+      0%   { transform: translateX(-200%); }
+      100% { transform: translateX(350%); }
+    }
+
+    /* ── Status badge ── */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-pending   { background: rgba(251,191,36,0.15);  color: var(--warning); }
+    .badge-progress  { background: rgba(91,110,245,0.15);  color: var(--primary); }
+    .badge-completed { background: rgba(52,211,153,0.15);  color: var(--success); }
+    .badge-failed    { background: rgba(248,113,113,0.15); color: var(--danger);  }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
+    }
+    .dot.pulse { animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── Error box ── */
+    .error-box {
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--danger);
+      display: none;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Multi-task list ── */
+    .task-list { display: flex; flex-direction: column; gap: 10px; }
+    .task-item {
+      background: var(--surface-2);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .task-item .name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+    }
+    .task-error {
+      width: 100%;
+      display: none;
+      color: var(--danger);
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>软著代码生成系统</h1>
+    <p>上传包含软件说明书的压缩包，自动生成软著代码并打包</p>
+  </div>
+
+  <!-- 上传卡片 -->
+  <div class="card">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".zip" multiple />
+      <span class="upload-icon">📦</span>
+      <div class="label">拖拽 zip 文件到此处，或 <span>点击选择</span></div>
+      <div class="file-name" id="fileName"></div>
+    </div>
+
+    <button class="btn btn-primary" id="submitBtn" disabled>
+      <span id="btnText">开始生成</span>
+    </button>
+  </div>
+
+  <!-- 任务状态卡片 -->
+  <div class="card status-panel" id="statusPanel">
+
+    <div style="font-size:13px;font-weight:600;color:var(--text-muted)">任务进度</div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar indeterminate" id="progressBar"></div>
+    </div>
+
+    <div class="task-list" id="taskList"></div>
+
+    <div class="error-box" id="errorBox"></div>
+
+  </div>
+
+</div>
+
+<script>
+  const fileInput   = document.getElementById('fileInput');
+  const uploadZone  = document.getElementById('uploadZone');
+  const fileName    = document.getElementById('fileName');
+  const submitBtn   = document.getElementById('submitBtn');
+  const btnText     = document.getElementById('btnText');
+  const statusPanel = document.getElementById('statusPanel');
+  const progressBar = document.getElementById('progressBar');
+  const taskList    = document.getElementById('taskList');
+  const errorBox    = document.getElementById('errorBox');
+
+  let selectedFiles = [];
+  // { task_id, filename, status, el, intervalId }
+  let tasks = [];
+
+  // ── 文件选择 ──
+  fileInput.addEventListener('change', () => {
+    selectedFiles = Array.from(fileInput.files);
+    updateFileDisplay();
+  });
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    selectedFiles = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.zip'));
+    // sync to input (visual only)
+    updateFileDisplay();
+  });
+
+  function updateFileDisplay() {
+    if (selectedFiles.length === 0) {
+      fileName.style.display = 'none';
+      submitBtn.disabled = true;
+      return;
+    }
+    fileName.style.display = 'block';
+    fileName.textContent = selectedFiles.map(f => f.name).join('、');
+    submitBtn.disabled = false;
+  }
+
+  // ── 提交 ──
+  submitBtn.addEventListener('click', async () => {
+    if (!selectedFiles.length) return;
+
+    submitBtn.disabled = true;
+    btnText.textContent = '提交中…';
+    errorBox.style.display = 'none';
+
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append('files', f));
+
+    let resp;
+    try {
+      resp = await fetch('/api/cr_rz/generate', { method: 'POST', body: formData });
+    } catch (err) {
+      showError('网络错误：' + err.message);
+      resetBtn();
+      return;
+    }
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      showError((data.detail || JSON.stringify(data)));
+      resetBtn();
+      return;
+    }
+
+    // 展示状态面板
+    statusPanel.style.display = 'flex';
+    taskList.innerHTML = '';
+    tasks = [];
+
+    const ids = data.task_ids || [data.task_id];
+    ids.forEach((tid, i) => {
+      const name = selectedFiles[i] ? selectedFiles[i].name : tid;
+      const item = createTaskItem(tid, name);
+      taskList.appendChild(item.el);
+      tasks.push(item);
+      startPolling(item);
+    });
+
+    btnText.textContent = '开始生成';
+  });
+
+  // ── 任务卡片 ──
+  function createTaskItem(taskId, filename) {
+    const el = document.createElement('div');
+    el.className = 'task-item';
+    el.innerHTML = `
+      <div class="name" title="${filename}">${filename}</div>
+      <div class="badge badge-pending"><span class="dot pulse"></span> 等待中</div>
+      <div class="task-error"></div>
+    `;
+    return { task_id: taskId, filename, status: 'pending', el, intervalId: null };
+  }
+
+  function updateTaskItem(item, status, error) {
+    const badge = item.el.querySelector('.badge');
+    const taskError = item.el.querySelector('.task-error');
+    badge.className = 'badge';
+    badge.innerHTML = '';
+
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+
+    if (status === 'pending') {
+      badge.classList.add('badge-pending');
+      dot.classList.add('pulse');
+      badge.appendChild(dot);
+      badge.append(' 等待中');
+    } else if (status === 'in_progress') {
+      badge.classList.add('badge-progress');
+      dot.classList.add('pulse');
+      badge.appendChild(dot);
+      badge.append(' 生成中');
+    } else if (status === 'completed') {
+      badge.classList.add('badge-completed');
+      badge.appendChild(dot);
+      badge.append(' 完成');
+      // 加下载按钮
+      const dl = document.createElement('a');
+      dl.href = `/api/cr_rz/download/${item.task_id}`;
+      dl.download = '';
+      dl.innerHTML = `<button class="btn btn-success" style="width:auto;padding:6px 14px;font-size:12px;">下载</button>`;
+      item.el.appendChild(dl);
+    } else if (status === 'failed' || status === 'cancelled') {
+      badge.classList.add('badge-failed');
+      badge.appendChild(dot);
+      badge.append(status === 'cancelled' ? ' 已取消' : ' 失败');
+      if (error) {
+        taskError.textContent = `⚠ ${error}`;
+        taskError.style.display = 'block';
+      }
+    }
+    item.status = status;
+  }
+
+  function stageText(stage) {
+    return ({
+      queued: '等待中', extracting: '解压材料中', generating: '生成代码中',
+      packaging: '构建文档中', completed: '完成', failed: '失败'
+    })[stage] || null;
+  }
+
+  // ── 轮询 ──
+  function startPolling(item) {
+    item.intervalId = setInterval(async () => {
+      let data;
+      try {
+        const r = await fetch(`/api/cr_rz/status/${item.task_id}`);
+        data = await r.json();
+      } catch { return; }
+
+      updateTaskItem(item, data.status, data.error);
+      const stage = stageText(data.stage);
+      if (stage && data.status === 'in_progress') {
+        item.el.querySelector('.badge').lastChild.textContent = ` ${stage}`;
+      }
+
+      if (['completed', 'failed', 'cancelled'].includes(data.status)) {
+        clearInterval(item.intervalId);
+        checkAllDone();
+      }
+    }, 3000);
+  }
+
+  function checkAllDone() {
+    const done = tasks.every(t => ['completed', 'failed', 'cancelled'].includes(t.status));
+    if (done) {
+      progressBar.classList.remove('indeterminate');
+      progressBar.style.width = '100%';
+      submitBtn.disabled = false;
+    }
+  }
+
+  // ── 工具 ──
+  function showError(msg) {
+    errorBox.style.display = 'block';
+    errorBox.textContent = '⚠ ' + msg;
+  }
+
+  function resetBtn() {
+    submitBtn.disabled = false;
+    btnText.textContent = '开始生成';
+  }
+</script>
+</body>
+</html>
