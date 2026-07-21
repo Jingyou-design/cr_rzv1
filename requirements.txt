@@ -1,0 +1,36 @@
+# 核心框架
+langchain>=1.2.6
+langchain-core>=1.4.6
+langgraph>=1.0.6
+langgraph-prebuilt>=1.0.6
+langchain-deepseek>=1.1.0
+langchain-openai>=1.1.7
+
+# Deep Agents
+deepagents>=0.7.0a4
+
+# Web 框架
+fastapi>=0.128.0
+uvicorn>=0.40.0
+python-multipart>=0.0.9
+
+# 数据验证与配置
+pydantic>=2.12.5
+pydantic-settings>=2.12.0
+python-dotenv>=1.2.1
+
+# 文档处理
+python-docx>=1.1.0
+pypandoc>=1.16.2
+
+# 异步与 HTTP
+aiohttp>=3.14.1
+aiofiles>=25.1.0
+httpx>=0.28.0
+
+# 工具库
+tenacity>=9.1.2
+pyyaml>=6.0.3
+tiktoken>=0.12.0
+
+
