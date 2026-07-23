@@ -44,7 +44,7 @@ RUN pip3 install -r requirements.txt --break-system-packages --ignore-installed 
 COPY . .
 
 # 暴露端口
-EXPOSE 8000
+EXPOSE 8003
 
 # 启动服务
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]
